@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { useEffect, useRef, useState } from "react";
 import BottomNav from "./components/BottomNav";
 import { usePhoneAuth } from "./hooks/usePhoneAuth";
-import { useIsAdmin, useRegisterUser } from "./hooks/useQueries";
+import { useRegisterUser } from "./hooks/useQueries";
 import AccountPage from "./pages/AccountPage";
 import AdminPage from "./pages/AdminPage";
 import AuthPage from "./pages/AuthPage";
@@ -15,7 +15,7 @@ export type Page = "home" | "game" | "wallet" | "admin" | "account";
 export default function App() {
   const { identity, isInitializing } = usePhoneAuth();
   const [currentPage, setCurrentPage] = useState<Page>("home");
-  const { data: isAdmin } = useIsAdmin();
+  const isAdmin = localStorage.getItem("cw_is_admin") === "1";
   const registerUser = useRegisterUser();
   const mutate = registerUser.mutate;
   const prevIdentityRef = useRef<typeof identity>(undefined);
@@ -62,7 +62,7 @@ export default function App() {
       <BottomNav
         current={currentPage}
         onChange={setCurrentPage}
-        isAdmin={!!isAdmin}
+        isAdmin={isAdmin}
       />
       <Toaster />
     </div>

@@ -1,16 +1,36 @@
 import { Button } from "@/components/ui/button";
-import { LogOut, Phone, Wallet } from "lucide-react";
+import { LogOut, Phone, Shield, Wallet } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { usePhoneAuth } from "../hooks/usePhoneAuth";
 import { useUserBalance } from "../hooks/useQueries";
+
+const ADMIN_PASSWORD = "colorwin@9999";
 
 export default function AccountPage() {
   const { logout, identity } = usePhoneAuth();
   const { data: balance } = useUserBalance();
+  const [token, setToken] = useState("");
+  const [expanded, setExpanded] = useState(false);
+
+  const isAdmin = localStorage.getItem("cw_is_admin") === "1";
+
   const balanceDisplay =
     balance !== undefined ? (Number(balance) / 100).toFixed(2) : "0.00";
 
   const principalStr = identity?.getPrincipal().toString() ?? "";
   const shortId = principalStr ? `${principalStr.slice(0, 12)}...` : "Unknown";
+
+  const handleClaimAdmin = () => {
+    if (!token.trim()) return;
+    if (token.trim() === ADMIN_PASSWORD) {
+      localStorage.setItem("cw_is_admin", "1");
+      toast.success("Admin access granted!");
+      window.location.reload();
+    } else {
+      toast.error("Incorrect password.");
+    }
+  };
 
   return (
     <div className="min-h-dvh bg-gray-50">
@@ -70,6 +90,62 @@ export default function AccountPage() {
             <p className="text-gray-500 text-xs">Principal ID</p>
             <p className="font-bold text-gray-800 text-sm">{shortId}</p>
           </div>
+        </div>
+
+        {/* Admin Setup Card */}
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <button
+            type="button"
+            data-ocid="account.admin_setup.toggle"
+            className="w-full flex items-center justify-between p-5 text-left"
+            onClick={() => setExpanded((v) => !v)}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center"
+                style={{ background: "hsl(8 86% 95%)" }}
+              >
+                <Shield
+                  className="w-5 h-5"
+                  style={{ color: "hsl(8 86% 61%)" }}
+                />
+              </div>
+              <span className="font-semibold text-gray-700 text-sm">
+                {isAdmin ? "Admin Access (Active ✓)" : "Admin Access"}
+              </span>
+            </div>
+            {!isAdmin && (
+              <span className="text-gray-400 text-xs">
+                {expanded ? "▲" : "▼"}
+              </span>
+            )}
+          </button>
+
+          {expanded && !isAdmin && (
+            <div className="px-5 pb-5 space-y-3">
+              <input
+                data-ocid="account.admin_token.input"
+                type="password"
+                placeholder="Enter admin password"
+                value={token}
+                onChange={(e) => setToken(e.target.value)}
+                className="w-full h-11 px-4 rounded-xl border border-gray-200 text-sm outline-none focus:border-red-400 bg-gray-50"
+              />
+              <button
+                type="button"
+                data-ocid="account.claim_admin.button"
+                disabled={!token.trim()}
+                onClick={handleClaimAdmin}
+                className="w-full h-11 rounded-xl text-white font-semibold text-sm disabled:opacity-50"
+                style={{
+                  background:
+                    "linear-gradient(135deg, hsl(8 86% 61%) 0%, hsl(8 86% 45%) 100%)",
+                }}
+              >
+                Claim Admin
+              </button>
+            </div>
+          )}
         </div>
 
         <Button
