@@ -183,9 +183,9 @@ export function useStartNewRound() {
   const { actor } = useActor();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async () => {
+    mutationFn: async (durationSeconds: number) => {
       if (!actor) throw new Error("No actor");
-      return actor.startNewRound(180n);
+      return actor.startNewRound(BigInt(durationSeconds));
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["activeRound"] });

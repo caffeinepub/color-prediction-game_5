@@ -3,10 +3,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowDownCircle, ArrowUpCircle, Coins, Loader2 } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, Loader2 } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { toast } from "sonner";
+import upiQrImage from "../assets/upi-qr.jpg";
 import {
   useCreateDeposit,
   useCreateWithdrawal,
@@ -41,7 +42,6 @@ export default function WalletPage() {
   const [depAmount, setDepAmount] = useState("");
   const [depUtr, setDepUtr] = useState("");
   const [depNote, setDepNote] = useState("");
-
   const [withAmount, setWithAmount] = useState("");
   const [withUpi, setWithUpi] = useState("");
 
@@ -99,32 +99,44 @@ export default function WalletPage() {
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="game-card p-5 text-center bg-gradient-to-br from-game-violet/20 to-game-red/20"
+        className="app-header rounded-2xl p-5 text-center shadow-md"
       >
-        <p className="text-muted-foreground text-xs uppercase tracking-widest mb-1">
+        <p className="text-white/80 text-xs uppercase tracking-widest mb-1">
           Your Balance
         </p>
-        <div className="flex items-center justify-center gap-2">
-          <Coins size={24} className="text-yellow-400" />
-          <span className="font-display font-bold text-4xl text-yellow-400">
-            ₹{balance?.toString() ?? "0"}
-          </span>
+        <span className="font-display font-bold text-4xl text-white">
+          ₹{balance?.toString() ?? "0"}
+        </span>
+        <div className="flex justify-center gap-4 mt-3">
+          <div className="text-center">
+            <p className="text-white/70 text-xs">Total Deposits</p>
+            <p className="text-white font-bold text-sm">
+              {deposits?.length ?? 0}
+            </p>
+          </div>
+          <div className="w-px bg-white/20" />
+          <div className="text-center">
+            <p className="text-white/70 text-xs">Total Withdrawals</p>
+            <p className="text-white font-bold text-sm">
+              {withdrawals?.length ?? 0}
+            </p>
+          </div>
         </div>
       </motion.div>
 
       <Tabs defaultValue="deposit">
-        <TabsList className="w-full bg-secondary">
+        <TabsList className="w-full bg-white border border-gray-200">
           <TabsTrigger
             data-ocid="wallet.deposit.tab"
             value="deposit"
-            className="flex-1 flex items-center gap-1"
+            className="flex-1 flex items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-white"
           >
             <ArrowDownCircle size={14} /> Deposit
           </TabsTrigger>
           <TabsTrigger
             data-ocid="wallet.withdraw.tab"
             value="withdraw"
-            className="flex-1 flex items-center gap-1"
+            className="flex-1 flex items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-white"
           >
             <ArrowUpCircle size={14} /> Withdraw
           </TabsTrigger>
@@ -137,9 +149,9 @@ export default function WalletPage() {
             <p className="font-display font-bold text-sm uppercase tracking-widest text-primary">
               Scan to Pay
             </p>
-            <div className="rounded-xl overflow-hidden border-2 border-primary/40 shadow-lg glow-violet">
+            <div className="rounded-xl overflow-hidden border-4 border-primary shadow-lg">
               <img
-                src="/assets/uploads/img_20260328_115011-019d3414-49d1-7371-929a-403c3d0cb033-1.jpg"
+                src={upiQrImage}
                 alt="UPI QR Code"
                 className="w-56 h-56 object-contain bg-white"
               />
@@ -165,7 +177,7 @@ export default function WalletPage() {
                 min={10}
                 value={depAmount}
                 onChange={(e) => setDepAmount(e.target.value)}
-                className="mt-1 bg-secondary border-border"
+                className="mt-1"
                 placeholder="e.g. 500"
               />
             </div>
@@ -181,7 +193,7 @@ export default function WalletPage() {
                 data-ocid="wallet.deposit_utr.input"
                 value={depUtr}
                 onChange={(e) => setDepUtr(e.target.value)}
-                className="mt-1 bg-secondary border-border"
+                className="mt-1"
                 placeholder="12-digit UTR number"
               />
             </div>
@@ -197,8 +209,8 @@ export default function WalletPage() {
                 data-ocid="wallet.deposit_note.textarea"
                 value={depNote}
                 onChange={(e) => setDepNote(e.target.value)}
-                className="mt-1 bg-secondary border-border resize-none"
-                placeholder="Optional note or screenshot description"
+                className="mt-1 resize-none"
+                placeholder="Optional note"
                 rows={2}
               />
             </div>
@@ -206,7 +218,7 @@ export default function WalletPage() {
               data-ocid="wallet.deposit.submit_button"
               onClick={handleDeposit}
               disabled={createDeposit.isPending}
-              className="w-full h-11 font-bold bg-game-green hover:bg-game-green/80"
+              className="w-full h-11 font-bold bg-game-green hover:bg-game-green/80 text-white"
             >
               {createDeposit.isPending ? (
                 <>
@@ -270,7 +282,7 @@ export default function WalletPage() {
                 min={100}
                 value={withAmount}
                 onChange={(e) => setWithAmount(e.target.value)}
-                className="mt-1 bg-secondary border-border"
+                className="mt-1"
                 placeholder="Minimum ₹100"
               />
             </div>
@@ -286,7 +298,7 @@ export default function WalletPage() {
                 data-ocid="wallet.withdraw_upi.input"
                 value={withUpi}
                 onChange={(e) => setWithUpi(e.target.value)}
-                className="mt-1 bg-secondary border-border"
+                className="mt-1"
                 placeholder="yourname@upi"
               />
             </div>
@@ -294,7 +306,7 @@ export default function WalletPage() {
               data-ocid="wallet.withdraw.submit_button"
               onClick={handleWithdrawal}
               disabled={createWithdrawal.isPending}
-              className="w-full h-11 font-bold bg-game-red hover:bg-game-red/80"
+              className="w-full h-11 font-bold bg-game-red hover:bg-game-red/80 text-white"
             >
               {createWithdrawal.isPending ? (
                 <>

@@ -18,35 +18,36 @@
 
 @layer base {
   :root {
-    --background: 260 30% 6%;
-    --foreground: 240 10% 96%;
-    --card: 260 25% 9%;
-    --card-foreground: 240 10% 96%;
-    --popover: 260 25% 9%;
-    --popover-foreground: 240 10% 96%;
-    --primary: 271 80% 60%;
+    --background: 0 0% 95%;
+    --foreground: 0 0% 13%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 13%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 13%;
+    --primary: 8 86% 61%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 260 20% 14%;
-    --secondary-foreground: 240 10% 90%;
-    --muted: 260 20% 14%;
-    --muted-foreground: 240 10% 55%;
-    --accent: 271 80% 60%;
+    --secondary: 0 0% 93%;
+    --secondary-foreground: 0 0% 30%;
+    --muted: 0 0% 93%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 8 86% 61%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --success: 142 71% 45%;
+    --success: 142 71% 40%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 10%;
-    --border: 260 20% 18%;
-    --input: 260 20% 18%;
-    --ring: 271 80% 60%;
+    --border: 0 0% 87%;
+    --input: 0 0% 87%;
+    --ring: 8 86% 61%;
     --radius: 0.75rem;
 
     /* game-specific */
-    --color-red: 0 72% 51%;
-    --color-green: 142 71% 45%;
-    --color-violet: 271 80% 60%;
+    --color-red: 4 80% 52%;
+    --color-green: 142 71% 40%;
+    --color-violet: 271 80% 55%;
+    --color-header: 8 86% 61%;
   }
 
   * {
@@ -67,17 +68,9 @@
 }
 
 @layer components {
-  .glow-red {
-    box-shadow: 0 0 20px 2px hsl(0 72% 51% / 0.5), 0 0 40px 4px
-      hsl(0 72% 51% / 0.2);
-  }
-  .glow-green {
-    box-shadow: 0 0 20px 2px hsl(142 71% 45% / 0.5), 0 0 40px 4px
-      hsl(142 71% 45% / 0.2);
-  }
-  .glow-violet {
-    box-shadow: 0 0 20px 2px hsl(271 80% 60% / 0.5), 0 0 40px 4px
-      hsl(271 80% 60% / 0.2);
+  .app-header {
+    background: hsl(var(--color-header));
+    @apply text-white;
   }
   .bet-btn {
     @apply relative overflow-hidden font-display font-bold text-lg tracking-wider uppercase rounded-xl transition-all duration-200 active:scale-95 select-none;
@@ -88,19 +81,52 @@
     background: radial-gradient(circle at center, white 0%, transparent 70%);
   }
   .bet-btn:hover::before {
-    @apply opacity-10;
+    @apply opacity-20;
   }
   .game-card {
-    @apply bg-card border border-border rounded-2xl;
+    @apply bg-card border border-border rounded-2xl shadow-sm;
   }
   .badge-pending {
-    @apply bg-yellow-500/20 text-yellow-400 border border-yellow-500/30;
+    @apply bg-yellow-100 text-yellow-700 border border-yellow-300;
   }
   .badge-approved,
   .badge-paid {
-    @apply bg-green-500/20 text-green-400 border border-green-500/30;
+    @apply bg-green-100 text-green-700 border border-green-300;
   }
   .badge-rejected {
-    @apply bg-red-500/20 text-red-400 border border-red-500/30;
+    @apply bg-red-100 text-red-600 border border-red-300;
+  }
+  .marquee-container {
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .marquee-text {
+    display: inline-block;
+    animation: marquee 20s linear infinite;
+  }
+  @keyframes marquee {
+    0% {
+      transform: translateX(100vw);
+    }
+    100% {
+      transform: translateX(-100%);
+    }
+  }
+  .number-ball {
+    @apply w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-sm select-none cursor-pointer active:scale-95 transition-all;
+  }
+  .number-ball-rv {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--color-red)) 50%,
+      hsl(var(--color-violet)) 50%
+    );
+  }
+  .number-ball-gv {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--color-green)) 50%,
+      hsl(var(--color-violet)) 50%
+    );
   }
 }

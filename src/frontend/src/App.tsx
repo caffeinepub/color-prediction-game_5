@@ -1,26 +1,31 @@
 import { Toaster } from "@/components/ui/sonner";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import BottomNav from "./components/BottomNav";
 import { useInternetIdentity } from "./hooks/useInternetIdentity";
 import { useIsAdmin, useRegisterUser } from "./hooks/useQueries";
+import AccountPage from "./pages/AccountPage";
 import AdminPage from "./pages/AdminPage";
 import AuthPage from "./pages/AuthPage";
 import GamePage from "./pages/GamePage";
+import HomePage from "./pages/HomePage";
 import WalletPage from "./pages/WalletPage";
 
-export type Page = "game" | "wallet" | "admin";
+export type Page = "home" | "game" | "wallet" | "admin" | "account";
 
 export default function App() {
   const { identity, isInitializing } = useInternetIdentity();
-  const [currentPage, setCurrentPage] = useState<Page>("game");
+  const [currentPage, setCurrentPage] = useState<Page>("home");
   const { data: isAdmin } = useIsAdmin();
   const registerUser = useRegisterUser();
   const mutate = registerUser.mutate;
+  const prevIdentityRef = useRef<typeof identity>(undefined);
 
   useEffect(() => {
-    if (identity) {
+    if (identity && !prevIdentityRef.current) {
+      setCurrentPage("home");
       mutate();
     }
+    prevIdentityRef.current = identity;
   }, [identity, mutate]);
 
   if (isInitializing) {
@@ -46,9 +51,13 @@ export default function App() {
   return (
     <div className="flex flex-col min-h-dvh bg-background">
       <main className="flex-1 overflow-y-auto pb-20">
-        {currentPage === "game" && <GamePage />}
+        {currentPage === "home" && <HomePage onNavigate={setCurrentPage} />}
+        {currentPage === "game" && (
+          <GamePage onBack={() => setCurrentPage("home")} />
+        )}
         {currentPage === "wallet" && <WalletPage />}
         {currentPage === "admin" && isAdmin && <AdminPage />}
+        {currentPage === "account" && <AccountPage />}
       </main>
       <BottomNav
         current={currentPage}

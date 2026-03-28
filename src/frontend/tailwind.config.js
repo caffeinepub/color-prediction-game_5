@@ -47,25 +47,12 @@ export default {
         "game-red": "hsl(var(--color-red))",
         "game-green": "hsl(var(--color-green))",
         "game-violet": "hsl(var(--color-violet))",
+        "app-header": "hsl(var(--color-header))",
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
-      },
-      keyframes: {
-        pulse_glow: {
-          "0%, 100%": { opacity: "1" },
-          "50%": { opacity: "0.5" },
-        },
-        countdown_tick: {
-          "0%": { transform: "scale(1.1)", color: "hsl(0 72% 51%)" },
-          "100%": { transform: "scale(1)", color: "inherit" },
-        },
-      },
-      animation: {
-        pulse_glow: "pulse_glow 2s ease-in-out infinite",
-        countdown_tick: "countdown_tick 0.3s ease-out",
       },
     },
   },

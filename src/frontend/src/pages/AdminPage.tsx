@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckCircle, Loader2, Play, Square, XCircle, Zap } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Color, RoundStatus } from "../backend.d";
 import {
@@ -24,7 +25,7 @@ function StatusBadge({ status }: { status: string }) {
       : status === "approved" || status === "paid"
         ? "badge-approved"
         : status === "open"
-          ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+          ? "bg-blue-100 text-blue-600 border border-blue-300"
           : status === "won"
             ? "badge-approved"
             : "badge-rejected";
@@ -37,7 +38,33 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+const DURATION_OPTIONS = [
+  { label: "30s", value: 30 },
+  { label: "1 Min", value: 60 },
+  { label: "5 Min", value: 300 },
+];
+
+// Map number 0-9 to Color
+function numberToColor(n: number): Color {
+  if (n === 0 || n === 5) return Color.violet;
+  if ([1, 3, 7, 9].includes(n)) return Color.green;
+  return Color.red;
+}
+
+const NUMBER_CONFIGS = Array.from({ length: 10 }, (_, n) => ({
+  number: n,
+  color: numberToColor(n),
+  bgClass:
+    n === 0 || n === 5
+      ? "bg-game-violet"
+      : [1, 3, 7, 9].includes(n)
+        ? "bg-game-green"
+        : "bg-game-red",
+}));
+
 export default function AdminPage() {
+  const [selectedDuration, setSelectedDuration] = useState<number>(60);
+
   const { data: activeRound } = useActiveRound();
   const { data: allDeposits } = useAllDeposits();
   const { data: allWithdrawals } = useAllWithdrawals();
@@ -53,18 +80,19 @@ export default function AdminPage() {
 
   async function handleStartRound() {
     try {
-      await startRound.mutateAsync();
+      await startRound.mutateAsync(selectedDuration);
       toast.success("New round started!");
     } catch (e: any) {
       toast.error(e?.message || "Failed to start round");
     }
   }
 
-  async function handleSetResult(color: Color) {
+  async function handleSetResultByNumber(n: number) {
     if (!activeRound) return;
+    const color = numberToColor(n);
     try {
       await setResult.mutateAsync({ roundId: activeRound.id, result: color });
-      toast.success(`Result set to ${color.toUpperCase()}!`);
+      toast.success(`Result set: Number ${n} → ${color.toUpperCase()}!`);
     } catch (e: any) {
       toast.error(e?.message || "Failed to set result");
     }
@@ -88,7 +116,7 @@ export default function AdminPage() {
       </div>
 
       <Tabs defaultValue="game">
-        <TabsList className="w-full bg-secondary grid grid-cols-4">
+        <TabsList className="w-full bg-white border border-gray-200 grid grid-cols-4">
           <TabsTrigger
             data-ocid="admin.game.tab"
             value="game"
@@ -152,6 +180,24 @@ export default function AdminPage() {
               </p>
             )}
 
+            <div className="flex gap-2">
+              {DURATION_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  data-ocid="admin.duration.toggle"
+                  onClick={() => setSelectedDuration(opt.value)}
+                  className={`flex-1 py-1.5 rounded font-bold text-sm border transition-colors ${
+                    selectedDuration === opt.value
+                      ? "bg-game-green text-white border-game-green"
+                      : "bg-secondary text-muted-foreground border-border hover:border-game-green/50"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
             <Button
               data-ocid="admin.start_round.primary_button"
               onClick={handleStartRound}
@@ -159,7 +205,7 @@ export default function AdminPage() {
                 startRound.isPending ||
                 !!(activeRound && activeRound.status === RoundStatus.betting)
               }
-              className="w-full bg-game-green hover:bg-game-green/80 font-bold"
+              className="w-full bg-game-green hover:bg-game-green/80 text-white font-bold"
             >
               {startRound.isPending ? (
                 <>
@@ -196,37 +242,29 @@ export default function AdminPage() {
           {activeRound && activeRound.status === RoundStatus.closed && (
             <div className="game-card p-4 flex flex-col gap-3">
               <h3 className="font-bold text-sm uppercase tracking-widest text-muted-foreground">
-                Set Result
+                Set Result (Pick Number)
               </h3>
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  data-ocid="admin.result_red.button"
-                  onClick={() => handleSetResult(Color.red)}
-                  disabled={setResult.isPending}
-                  className="bet-btn h-12 bg-game-red text-white disabled:opacity-50"
-                >
-                  RED
-                </button>
-                <button
-                  type="button"
-                  data-ocid="admin.result_green.button"
-                  onClick={() => handleSetResult(Color.green)}
-                  disabled={setResult.isPending}
-                  className="bet-btn h-12 bg-game-green text-white disabled:opacity-50"
-                >
-                  GREEN
-                </button>
-                <button
-                  type="button"
-                  data-ocid="admin.result_violet.button"
-                  onClick={() => handleSetResult(Color.violet)}
-                  disabled={setResult.isPending}
-                  className="bet-btn h-12 bg-game-violet text-white disabled:opacity-50"
-                >
-                  VIOLET
-                </button>
+              <p className="text-xs text-muted-foreground">
+                Color is derived automatically from the number
+              </p>
+              <div className="grid grid-cols-5 gap-2">
+                {NUMBER_CONFIGS.map(({ number, bgClass }) => (
+                  <button
+                    key={number}
+                    type="button"
+                    data-ocid={`admin.result_${number}.button`}
+                    onClick={() => handleSetResultByNumber(number)}
+                    disabled={setResult.isPending}
+                    className={`${bgClass} text-white rounded-xl h-12 font-black text-lg disabled:opacity-50 active:scale-95 transition-transform`}
+                  >
+                    {number}
+                  </button>
+                ))}
               </div>
+              <p className="text-xs text-muted-foreground text-center">
+                0,5 = Violet &nbsp;|&nbsp; 1,3,7,9 = Green &nbsp;|&nbsp; 2,4,6,8
+                = Red
+              </p>
             </div>
           )}
         </TabsContent>
@@ -282,7 +320,7 @@ export default function AdminPage() {
                               toast.error(e?.message || "Error");
                             }
                           }}
-                          className="flex-1 bg-game-green hover:bg-game-green/80 text-xs font-bold h-8"
+                          className="flex-1 bg-game-green hover:bg-game-green/80 text-white text-xs font-bold h-8"
                         >
                           <CheckCircle size={12} className="mr-1" /> Approve
                         </Button>
@@ -297,7 +335,7 @@ export default function AdminPage() {
                               toast.error(e?.message || "Error");
                             }
                           }}
-                          className="flex-1 bg-game-red hover:bg-game-red/80 text-xs font-bold h-8"
+                          className="flex-1 bg-game-red hover:bg-game-red/80 text-white text-xs font-bold h-8"
                         >
                           <XCircle size={12} className="mr-1" /> Reject
                         </Button>
@@ -356,7 +394,7 @@ export default function AdminPage() {
                               toast.error(e?.message || "Error");
                             }
                           }}
-                          className="flex-1 bg-game-green hover:bg-game-green/80 text-xs font-bold h-8"
+                          className="flex-1 bg-game-green hover:bg-game-green/80 text-white text-xs font-bold h-8"
                         >
                           <CheckCircle size={12} className="mr-1" /> Mark Paid
                         </Button>
@@ -371,7 +409,7 @@ export default function AdminPage() {
                               toast.error(e?.message || "Error");
                             }
                           }}
-                          className="flex-1 bg-game-red hover:bg-game-red/80 text-xs font-bold h-8"
+                          className="flex-1 bg-game-red hover:bg-game-red/80 text-white text-xs font-bold h-8"
                         >
                           <XCircle size={12} className="mr-1" /> Reject
                         </Button>
