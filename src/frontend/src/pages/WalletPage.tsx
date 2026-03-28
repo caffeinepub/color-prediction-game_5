@@ -7,7 +7,6 @@ import { ArrowDownCircle, ArrowUpCircle, Loader2 } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { toast } from "sonner";
-import upiQrImage from "../assets/upi-qr.jpg";
 import {
   useCreateDeposit,
   useCreateWithdrawal,
@@ -15,6 +14,9 @@ import {
   useMyWithdrawals,
   useUserBalance,
 } from "../hooks/useQueries";
+
+const upiQrImage =
+  "/assets/img_20260328_115011-019d3414-49d1-7371-929a-403c3d0cb033.jpg";
 
 function StatusBadge({ status }: { status: string }) {
   const cls =

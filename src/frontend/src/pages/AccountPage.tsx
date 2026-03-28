@@ -1,10 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { LogOut, Phone, Wallet } from "lucide-react";
-import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import { usePhoneAuth } from "../hooks/usePhoneAuth";
 import { useUserBalance } from "../hooks/useQueries";
 
 export default function AccountPage() {
-  const { clear, identity } = useInternetIdentity();
+  const { logout, identity } = usePhoneAuth();
   const { data: balance } = useUserBalance();
   const balanceDisplay =
     balance !== undefined ? (Number(balance) / 100).toFixed(2) : "0.00";
@@ -73,9 +73,10 @@ export default function AccountPage() {
         </div>
 
         <Button
+          data-ocid="account.logout.button"
           variant="outline"
           className="w-full h-12 rounded-xl text-red-500 border-red-200 hover:bg-red-50 font-semibold"
-          onClick={clear}
+          onClick={logout}
         >
           <LogOut className="mr-2 h-4 w-4" />
           Logout

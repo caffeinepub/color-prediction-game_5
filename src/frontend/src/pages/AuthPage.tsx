@@ -9,12 +9,12 @@ import {
   Smartphone,
 } from "lucide-react";
 import { useState } from "react";
-import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import { usePhoneAuth } from "../hooks/usePhoneAuth";
 
 type Mode = "login" | "register";
 
 export default function AuthPage() {
-  const { login, isLoggingIn } = useInternetIdentity();
+  const { loginWithPhone, registerWithPhone } = usePhoneAuth();
   const [mode, setMode] = useState<Mode>("login");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -24,6 +24,64 @@ export default function AuthPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [remember, setRemember] = useState(false);
   const [agreed, setAgreed] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleLogin() {
+    setError("");
+    if (phone.length !== 10) {
+      setError("Please enter a valid 10-digit phone number.");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+    setIsLoading(true);
+    try {
+      await loginWithPhone(phone, password);
+    } catch (e: any) {
+      setError(e?.message || "Login failed.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleRegister() {
+    setError("");
+    if (phone.length !== 10) {
+      setError("Please enter a valid 10-digit phone number.");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+    if (!agreed) {
+      setError("Please agree to the Privacy Agreement.");
+      return;
+    }
+    setIsLoading(true);
+    try {
+      await registerWithPhone(phone, password);
+    } catch (e: any) {
+      setError(e?.message || "Registration failed.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  function switchMode(newMode: Mode) {
+    setMode(newMode);
+    setError("");
+    setPhone("");
+    setPassword("");
+    setConfirmPassword("");
+  }
 
   if (mode === "register") {
     return (
@@ -39,7 +97,7 @@ export default function AuthPage() {
           <div className="flex items-center justify-between mb-4">
             <button
               type="button"
-              onClick={() => setMode("login")}
+              onClick={() => switchMode("login")}
               className="w-9 h-9 flex items-center justify-center rounded-full bg-white/20"
             >
               <ChevronLeft className="w-5 h-5 text-white" />
@@ -90,6 +148,7 @@ export default function AuthPage() {
                 <ChevronLeft className="w-4 h-4 rotate-[-90deg] text-gray-400" />
               </div>
               <Input
+                data-ocid="auth.phone.input"
                 type="tel"
                 inputMode="numeric"
                 maxLength={10}
@@ -115,8 +174,9 @@ export default function AuthPage() {
             </div>
             <div className="relative">
               <Input
+                data-ocid="auth.password.input"
                 type={showPassword ? "text" : "password"}
-                placeholder="Set password"
+                placeholder="Set password (min 6 characters)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="bg-white border border-gray-200 rounded-xl h-12 text-base placeholder:text-gray-400 pr-12 focus-visible:ring-red-400"
@@ -147,6 +207,7 @@ export default function AuthPage() {
             </div>
             <div className="relative">
               <Input
+                data-ocid="auth.confirm_password.input"
                 type={showConfirm ? "text" : "password"}
                 placeholder="Confirm password"
                 value={confirmPassword}
@@ -220,15 +281,26 @@ export default function AuthPage() {
             </span>
           </div>
 
+          {/* Error message */}
+          {error && (
+            <p
+              data-ocid="auth.error_state"
+              className="text-red-500 text-sm text-center bg-red-50 rounded-xl px-3 py-2"
+            >
+              {error}
+            </p>
+          )}
+
           {/* Register button */}
           <Button
+            data-ocid="auth.register.submit_button"
             type="button"
-            onClick={login}
-            disabled={isLoggingIn}
+            onClick={handleRegister}
+            disabled={isLoading}
             className="w-full rounded-full text-white font-bold text-lg py-3 h-auto"
             style={{ background: "linear-gradient(90deg, #f87171, #dc2626)" }}
           >
-            {isLoggingIn ? (
+            {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                 Registering...
@@ -240,9 +312,10 @@ export default function AuthPage() {
 
           {/* Login link */}
           <Button
+            data-ocid="auth.login.link"
             type="button"
             variant="outline"
-            onClick={() => setMode("login")}
+            onClick={() => switchMode("login")}
             className="w-full rounded-full border border-gray-200 text-gray-600 font-medium text-base py-3 h-auto bg-white"
           >
             I have an account{" "}
@@ -319,6 +392,7 @@ export default function AuthPage() {
               <ChevronLeft className="w-4 h-4 rotate-[-90deg] text-gray-400" />
             </div>
             <Input
+              data-ocid="auth.phone.input"
               type="tel"
               inputMode="numeric"
               maxLength={10}
@@ -344,6 +418,7 @@ export default function AuthPage() {
           </div>
           <div className="relative">
             <Input
+              data-ocid="auth.password.input"
               type={showPassword ? "text" : "password"}
               placeholder="Password"
               value={password}
@@ -379,15 +454,26 @@ export default function AuthPage() {
           <span className="text-gray-500 text-sm">Remember password</span>
         </div>
 
+        {/* Error message */}
+        {error && (
+          <p
+            data-ocid="auth.error_state"
+            className="text-red-500 text-sm text-center bg-red-50 rounded-xl px-3 py-2"
+          >
+            {error}
+          </p>
+        )}
+
         {/* Login button */}
         <Button
+          data-ocid="auth.login.submit_button"
           type="button"
-          onClick={login}
-          disabled={isLoggingIn}
+          onClick={handleLogin}
+          disabled={isLoading}
           className="w-full rounded-full text-white font-bold text-lg py-3 h-auto"
           style={{ background: "linear-gradient(90deg, #f87171, #dc2626)" }}
         >
-          {isLoggingIn ? (
+          {isLoading ? (
             <>
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
               Logging in...
@@ -399,10 +485,11 @@ export default function AuthPage() {
 
         {/* Register button */}
         <Button
+          data-ocid="auth.register.link"
           type="button"
           variant="outline"
           className="w-full rounded-full border-2 border-red-400 text-red-500 font-bold text-lg py-3 h-auto bg-white hover:bg-red-50"
-          onClick={() => setMode("register")}
+          onClick={() => switchMode("register")}
         >
           Register
         </Button>

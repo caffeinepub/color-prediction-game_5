@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { useEffect, useRef, useState } from "react";
 import BottomNav from "./components/BottomNav";
-import { useInternetIdentity } from "./hooks/useInternetIdentity";
+import { usePhoneAuth } from "./hooks/usePhoneAuth";
 import { useIsAdmin, useRegisterUser } from "./hooks/useQueries";
 import AccountPage from "./pages/AccountPage";
 import AdminPage from "./pages/AdminPage";
@@ -13,7 +13,7 @@ import WalletPage from "./pages/WalletPage";
 export type Page = "home" | "game" | "wallet" | "admin" | "account";
 
 export default function App() {
-  const { identity, isInitializing } = useInternetIdentity();
+  const { identity, isInitializing } = usePhoneAuth();
   const [currentPage, setCurrentPage] = useState<Page>("home");
   const { data: isAdmin } = useIsAdmin();
   const registerUser = useRegisterUser();
