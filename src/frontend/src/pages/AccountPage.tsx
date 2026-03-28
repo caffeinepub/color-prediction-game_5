@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { LogOut, Phone, Shield, Wallet } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useActor } from "../hooks/useActor";
 import { usePhoneAuth } from "../hooks/usePhoneAuth";
 import { useUserBalance } from "../hooks/useQueries";
 
@@ -9,9 +10,11 @@ const ADMIN_PASSWORD = "colorwin@9999";
 
 export default function AccountPage() {
   const { logout, identity } = usePhoneAuth();
+  const { actor } = useActor();
   const { data: balance } = useUserBalance();
   const [token, setToken] = useState("");
   const [expanded, setExpanded] = useState(false);
+  const [claiming, setClaiming] = useState(false);
 
   const isAdmin = localStorage.getItem("cw_is_admin") === "1";
 
@@ -21,14 +24,30 @@ export default function AccountPage() {
   const principalStr = identity?.getPrincipal().toString() ?? "";
   const shortId = principalStr ? `${principalStr.slice(0, 12)}...` : "Unknown";
 
-  const handleClaimAdmin = () => {
+  const handleClaimAdmin = async () => {
     if (!token.trim()) return;
-    if (token.trim() === ADMIN_PASSWORD) {
-      localStorage.setItem("cw_is_admin", "1");
-      toast.success("Admin access granted!");
-      window.location.reload();
-    } else {
+    if (token.trim() !== ADMIN_PASSWORD) {
       toast.error("Incorrect password.");
+      return;
+    }
+    if (!actor) {
+      toast.error("Not connected. Please try again.");
+      return;
+    }
+    setClaiming(true);
+    try {
+      const result = await actor.claimAdmin(token.trim());
+      if (result) {
+        localStorage.setItem("cw_is_admin", "1");
+        toast.success("Admin access granted!");
+        window.location.reload();
+      } else {
+        toast.error("Incorrect password.");
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to claim admin.");
+    } finally {
+      setClaiming(false);
     }
   };
 
@@ -134,7 +153,7 @@ export default function AccountPage() {
               <button
                 type="button"
                 data-ocid="account.claim_admin.button"
-                disabled={!token.trim()}
+                disabled={!token.trim() || claiming}
                 onClick={handleClaimAdmin}
                 className="w-full h-11 rounded-xl text-white font-semibold text-sm disabled:opacity-50"
                 style={{
@@ -142,7 +161,7 @@ export default function AccountPage() {
                     "linear-gradient(135deg, hsl(8 86% 61%) 0%, hsl(8 86% 45%) 100%)",
                 }}
               >
-                Claim Admin
+                {claiming ? "Claiming..." : "Claim Admin"}
               </button>
             </div>
           )}

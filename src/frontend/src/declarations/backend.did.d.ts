@@ -98,6 +98,7 @@ export interface _SERVICE {
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'setRoundResult' : ActorMethod<[bigint, Color], undefined>,
   'settleBet' : ActorMethod<[bigint, [] | [bigint], BetStatus], undefined>,
+  'claimAdmin' : ActorMethod<[string], boolean>,
   'startNewRound' : ActorMethod<[bigint], bigint>,
 }
 export declare const idlService: IDL.ServiceClass;

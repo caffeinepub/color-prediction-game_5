@@ -106,5 +106,6 @@ export interface backendInterface {
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     setRoundResult(roundId: bigint, result: Color): Promise<void>;
     settleBet(betId: bigint, payout: bigint | null, betStatus: BetStatus): Promise<void>;
+    claimAdmin(password: string): Promise<boolean>;
     startNewRound(durationSeconds: bigint): Promise<bigint>;
 }

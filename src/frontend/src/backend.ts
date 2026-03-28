@@ -189,6 +189,7 @@ export interface backendInterface {
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     setRoundResult(roundId: bigint, result: Color): Promise<void>;
     settleBet(betId: bigint, payout: bigint | null, betStatus: BetStatus): Promise<void>;
+    claimAdmin(password: string): Promise<boolean>;
     startNewRound(durationSeconds: bigint): Promise<bigint>;
 }
 import type { Bet as _Bet, BetStatus as _BetStatus, Color as _Color, Deposit as _Deposit, DepositStatus as _DepositStatus, Round as _Round, RoundStatus as _RoundStatus, Time as _Time, UserProfile as _UserProfile, UserRole as _UserRole, WithdrawStatus as _WithdrawStatus, Withdrawal as _Withdrawal } from "./declarations/backend.did.d.ts";
@@ -583,6 +584,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.settleBet(arg0, to_candid_opt_n33(this._uploadFile, this._downloadFile, arg1), to_candid_BetStatus_n34(this._uploadFile, this._downloadFile, arg2));
+            return result;
+        }
+    }
+    async claimAdmin(arg0: string): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.claimAdmin(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.claimAdmin(arg0);
             return result;
         }
     }

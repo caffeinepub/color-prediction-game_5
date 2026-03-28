@@ -113,6 +113,7 @@ export const idlService = IDL.Service({
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
   'setRoundResult' : IDL.Func([IDL.Nat, Color], [], []),
   'settleBet' : IDL.Func([IDL.Nat, IDL.Opt(IDL.Nat), BetStatus], [], []),
+  'claimAdmin' : IDL.Func([IDL.Text], [IDL.Bool], []),
   'startNewRound' : IDL.Func([IDL.Nat], [IDL.Nat], []),
 });
 
@@ -224,7 +225,8 @@ export const idlFactory = ({ IDL }) => {
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
     'setRoundResult' : IDL.Func([IDL.Nat, Color], [], []),
     'settleBet' : IDL.Func([IDL.Nat, IDL.Opt(IDL.Nat), BetStatus], [], []),
-    'startNewRound' : IDL.Func([IDL.Nat], [IDL.Nat], []),
+    'claimAdmin' : IDL.Func([IDL.Text], [IDL.Bool], []),
+  'startNewRound' : IDL.Func([IDL.Nat], [IDL.Nat], []),
   });
 };
 

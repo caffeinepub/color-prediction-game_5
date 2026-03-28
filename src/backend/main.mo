@@ -16,6 +16,23 @@ actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
 
+  // ADMIN PASSWORD SYSTEM (no Caffeine token needed)
+  let ADMIN_PASSWORD : Text = "colorwin@9999";
+  stable var adminPrincipal : ?Principal = null;
+
+  public shared ({ caller }) func claimAdmin(password : Text) : async Bool {
+    if (password != ADMIN_PASSWORD) { return false };
+    adminPrincipal := ?caller;
+    true;
+  };
+
+  func isAdminCaller(caller : Principal) : Bool {
+    switch (adminPrincipal) {
+      case (?p) { p == caller };
+      case (null) { false };
+    };
+  };
+
   // TYPE DEFINITIONS
 
   public type Color = { #red; #green; #violet };
@@ -140,9 +157,6 @@ actor {
   };
 
   public query ({ caller }) func getUserBalance() : async Nat {
-    if (not AccessControl.hasPermission(accessControlState, caller, #user)) { 
-      Runtime.trap("Unauthorized: Only registered users can query balance") 
-    };
     getUserBalanceInternal(caller);
   };
 
@@ -154,32 +168,20 @@ actor {
   };
 
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
-    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
-      Runtime.trap("Unauthorized: Only users can view profiles");
-    };
     userProfiles.get(caller);
   };
 
   public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
-    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Can only view your own profile");
-    };
     userProfiles.get(user);
   };
 
   public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
-    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
-      Runtime.trap("Unauthorized: Only users can save profiles");
-    };
     userProfiles.add(caller, profile);
   };
 
   // DEPOSIT SYSTEM
 
   public shared ({ caller }) func createDeposit(amount : Nat, utr : Text, screenshot : Text) : async Nat {
-    if (not AccessControl.hasPermission(accessControlState, caller, #user)) { 
-      Runtime.trap("Unauthorized: Only users can create deposits") 
-    };
     let deposit : Deposit = {
       id = nextDepositId;
       user = caller;
@@ -195,8 +197,8 @@ actor {
   };
 
   public shared ({ caller }) func approveDeposit(depositId : Nat) : async () {
-    if (not AccessControl.hasPermission(accessControlState, caller, #admin)) { 
-      Runtime.trap("Unauthorized: Only admins can approve deposits") 
+    if (not isAdminCaller(caller)) {
+      Runtime.trap("Unauthorized: Only admin can approve deposits")
     };
     switch (deposits.get(depositId)) {
       case (null) { Runtime.trap("Deposit not found") };
@@ -213,8 +215,8 @@ actor {
   };
 
   public shared ({ caller }) func rejectDeposit(depositId : Nat) : async () {
-    if (not AccessControl.hasPermission(accessControlState, caller, #admin)) { 
-      Runtime.trap("Unauthorized: Only admins can reject deposits") 
+    if (not isAdminCaller(caller)) {
+      Runtime.trap("Unauthorized: Only admin can reject deposits")
     };
     switch (deposits.get(depositId)) {
       case (null) { Runtime.trap("Deposit not found") };
@@ -226,15 +228,12 @@ actor {
   };
 
   public query ({ caller }) func getMyDeposits() : async [Deposit] {
-    if (not AccessControl.hasPermission(accessControlState, caller, #user)) { 
-      Runtime.trap("Unauthorized: Only users can query their deposits") 
-    };
     deposits.values().toArray().filter(func(d) { d.user == caller });
   };
 
   public query ({ caller }) func getAllDeposits() : async [Deposit] {
-    if (not AccessControl.hasPermission(accessControlState, caller, #admin)) { 
-      Runtime.trap("Unauthorized: Only admins can query all deposits") 
+    if (not isAdminCaller(caller)) {
+      Runtime.trap("Unauthorized: Only admin can query all deposits")
     };
     deposits.values().toArray();
   };
@@ -242,9 +241,6 @@ actor {
   // WITHDRAWALS
 
   public shared ({ caller }) func createWithdrawal(amount : Nat, upi : Text) : async Nat {
-    if (not AccessControl.hasPermission(accessControlState, caller, #user)) { 
-      Runtime.trap("Unauthorized: Only users can create withdrawals") 
-    };
     let currentBalance = getUserBalanceInternal(caller);
     if (currentBalance < amount) { Runtime.trap("Insufficient balance for withdrawal") };
     switch (users.get(caller)) {
@@ -266,8 +262,8 @@ actor {
   };
 
   public shared ({ caller }) func markWithdrawalPaid(withdrawalId : Nat) : async () {
-    if (not AccessControl.hasPermission(accessControlState, caller, #admin)) { 
-      Runtime.trap("Unauthorized: Only admins can mark withdrawals as paid") 
+    if (not isAdminCaller(caller)) {
+      Runtime.trap("Unauthorized: Only admin can mark withdrawals as paid")
     };
     switch (withdrawals.get(withdrawalId)) {
       case (null) { Runtime.trap("Withdrawal not found") };
@@ -279,8 +275,8 @@ actor {
   };
 
   public shared ({ caller }) func rejectWithdrawal(withdrawalId : Nat) : async () {
-    if (not AccessControl.hasPermission(accessControlState, caller, #admin)) { 
-      Runtime.trap("Unauthorized: Only admins can reject withdrawals") 
+    if (not isAdminCaller(caller)) {
+      Runtime.trap("Unauthorized: Only admin can reject withdrawals")
     };
     switch (withdrawals.get(withdrawalId)) {
       case (null) { Runtime.trap("Withdrawal not found") };
@@ -297,15 +293,12 @@ actor {
   };
 
   public query ({ caller }) func getMyWithdrawals() : async [Withdrawal] {
-    if (not AccessControl.hasPermission(accessControlState, caller, #user)) { 
-      Runtime.trap("Unauthorized: Only users can query their withdrawals") 
-    };
     withdrawals.values().toArray().filter(func(w) { w.user == caller });
   };
 
   public query ({ caller }) func getAllWithdrawals() : async [Withdrawal] {
-    if (not AccessControl.hasPermission(accessControlState, caller, #admin)) { 
-      Runtime.trap("Unauthorized: Only admins can query all withdrawals") 
+    if (not isAdminCaller(caller)) {
+      Runtime.trap("Unauthorized: Only admin can query all withdrawals")
     };
     withdrawals.values().toArray();
   };
@@ -313,8 +306,8 @@ actor {
   // GAME ROUNDS
 
   public shared ({ caller }) func startNewRound(durationSeconds : Nat) : async Nat {
-    if (not AccessControl.hasPermission(accessControlState, caller, #admin)) { 
-      Runtime.trap("Unauthorized: Only admins can start new rounds") 
+    if (not isAdminCaller(caller)) {
+      Runtime.trap("Unauthorized: Only admin can start new rounds")
     };
     let round : Round = {
       id = nextRoundId;
@@ -329,9 +322,6 @@ actor {
   };
 
   public shared ({ caller }) func placeBet(roundId : Nat, color : Color, amount : Nat) : async () {
-    if (not AccessControl.hasPermission(accessControlState, caller, #user)) { 
-      Runtime.trap("Unauthorized: Only users can place bets") 
-    };
     let currentBalance = getUserBalanceInternal(caller);
     if (currentBalance < amount) { Runtime.trap("Insufficient balance to place bet") };
 
@@ -366,8 +356,8 @@ actor {
   };
 
   public shared ({ caller }) func closeRound(roundId : Nat) : async () {
-    if (not AccessControl.hasPermission(accessControlState, caller, #admin)) { 
-      Runtime.trap("Unauthorized: Only admins can close rounds") 
+    if (not isAdminCaller(caller)) {
+      Runtime.trap("Unauthorized: Only admin can close rounds")
     };
     switch (rounds.get(roundId)) {
       case (null) { Runtime.trap("Round not found") };
@@ -378,8 +368,8 @@ actor {
   };
 
   public shared ({ caller }) func setRoundResult(roundId : Nat, result : Color) : async () {
-    if (not AccessControl.hasPermission(accessControlState, caller, #admin)) { 
-      Runtime.trap("Unauthorized: Only admins can set round results") 
+    if (not isAdminCaller(caller)) {
+      Runtime.trap("Unauthorized: Only admin can set round results")
     };
     switch (rounds.get(roundId)) {
       case (null) { Runtime.trap("Round not found") };
@@ -450,8 +440,8 @@ actor {
   };
 
   public shared ({ caller }) func settleBet(betId : Nat, payout : ?Nat, betStatus : BetStatus) : async () {
-    if (not AccessControl.hasPermission(accessControlState, caller, #admin)) { 
-      Runtime.trap("Unauthorized: Only admins can settle bets") 
+    if (not isAdminCaller(caller)) {
+      Runtime.trap("Unauthorized: Only admin can settle bets")
     };
     switch (bets.get(betId)) {
       case (null) { Runtime.trap("Bet not found") };
@@ -477,24 +467,13 @@ actor {
   };
 
   public query ({ caller }) func getMyBets() : async [Bet] {
-    if (not AccessControl.hasPermission(accessControlState, caller, #user)) { 
-      Runtime.trap("Unauthorized: Only users can query their bets") 
-    };
     bets.values().toArray().filter(func(bet) { bet.user == caller }).sort();
   };
 
   public query ({ caller }) func getAllBets() : async [Bet] {
-    if (not AccessControl.hasPermission(accessControlState, caller, #admin)) { 
-      Runtime.trap("Unauthorized: Only admins can query all bets") 
+    if (not isAdminCaller(caller)) {
+      Runtime.trap("Unauthorized: Only admin can query all bets")
     };
     bets.values().toArray();
-  };
-
-  // Helper functions
-  func getUserInternal(user : Principal) : User {
-    switch (users.get(user)) {
-      case (?u) { u };
-      case (null) { Runtime.trap("User not found") };
-    };
   };
 };

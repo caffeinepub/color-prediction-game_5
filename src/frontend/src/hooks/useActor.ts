@@ -11,18 +11,14 @@ export function useActor() {
   const actorQuery = useQuery<backendInterface>({
     queryKey: [ACTOR_QUERY_KEY, identity?.getPrincipal().toString()],
     queryFn: async () => {
-      const isAuthenticated = !!identity;
-
-      if (!isAuthenticated) {
+      if (!identity) {
         return await createActorWithConfig();
       }
-
       const actorOptions = {
         agentOptions: {
           identity,
         },
       };
-
       const actor = await createActorWithConfig(actorOptions);
       return actor;
     },
