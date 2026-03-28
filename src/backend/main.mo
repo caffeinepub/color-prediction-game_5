@@ -121,7 +121,7 @@ actor {
   // USER MANAGEMENT
 
   public shared ({ caller }) func registerUser() : async () {
-    if (users.containsKey(caller)) { Runtime.trap("User already registered") };
+    if (users.containsKey(caller)) { return };
 
     let user : User = {
       id = caller;
@@ -149,7 +149,7 @@ actor {
   func getUserBalanceInternal(user : Principal) : Nat {
     switch (users.get(user)) {
       case (?u) { u.balance };
-      case (null) { Runtime.trap("User not found") };
+      case (null) { 0 };
     };
   };
 
@@ -203,8 +203,11 @@ actor {
       case (?deposit) {
         if (deposit.status != #pending) { Runtime.trap("Deposit is not pending") };
         deposits.add(depositId, { deposit with status = #approved });
-        let user = getUserInternal(deposit.user);
-        users.add(deposit.user, { user with balance = user.balance + deposit.amount });
+        let currentBal = getUserBalanceInternal(deposit.user);
+        switch (users.get(deposit.user)) {
+          case (?user) { users.add(deposit.user, { user with balance = currentBal + deposit.amount }) };
+          case (null) {};
+        };
       };
     };
   };
@@ -244,7 +247,10 @@ actor {
     };
     let currentBalance = getUserBalanceInternal(caller);
     if (currentBalance < amount) { Runtime.trap("Insufficient balance for withdrawal") };
-    users.add(caller, { getUserInternal(caller) with balance = currentBalance - amount });
+    switch (users.get(caller)) {
+      case (?user) { users.add(caller, { user with balance = currentBalance - amount }) };
+      case (null) {};
+    };
 
     let withdrawal : Withdrawal = {
       id = nextWithdrawalId;
@@ -281,8 +287,11 @@ actor {
       case (?withdrawal) {
         if (withdrawal.status != #pending) { Runtime.trap("Withdrawal is not pending") };
         withdrawals.add(withdrawalId, { withdrawal with status = #rejected });
-        let user = getUserInternal(withdrawal.user);
-        users.add(withdrawal.user, { user with balance = user.balance + withdrawal.amount });
+        let currentBal = getUserBalanceInternal(withdrawal.user);
+        switch (users.get(withdrawal.user)) {
+          case (?user) { users.add(withdrawal.user, { user with balance = currentBal + withdrawal.amount }) };
+          case (null) {};
+        };
       };
     };
   };
@@ -336,7 +345,10 @@ actor {
       case (_) { Runtime.trap("Betting is not allowed on this round") };
     };
 
-    users.add(caller, { getUserInternal(caller) with balance = currentBalance - amount });
+    switch (users.get(caller)) {
+      case (?user) { users.add(caller, { user with balance = currentBalance - amount }) };
+      case (null) {};
+    };
 
     let bet : Bet = {
       id = nextBetId;
@@ -372,7 +384,6 @@ actor {
     switch (rounds.get(roundId)) {
       case (null) { Runtime.trap("Round not found") };
       case (?round) {
-        if (Time.now() < round.endTime) { Runtime.trap("Cannot set result before round ends") };
         rounds.add(roundId, {
           round with
           result = ?result;
@@ -405,8 +416,10 @@ actor {
 
         switch (payout) {
           case (?amount) {
-            let user = getUserInternal(bet.user);
-            users.add(bet.user, { user with balance = user.balance + amount });
+            switch (users.get(bet.user)) {
+              case (?user) { users.add(bet.user, { user with balance = user.balance + amount }) };
+              case (null) {};
+            };
           };
           case (null) {};
         };
@@ -452,8 +465,10 @@ actor {
 
         switch (payout) {
           case (?amount) {
-            let user = getUserInternal(bet.user);
-            users.add(bet.user, { user with balance = user.balance + amount });
+            switch (users.get(bet.user)) {
+              case (?user) { users.add(bet.user, { user with balance = user.balance + amount }) };
+              case (null) {};
+            };
           };
           case (null) {};
         };
